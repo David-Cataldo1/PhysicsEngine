@@ -1,0 +1,27 @@
+# CMake
+build*/
+CMakeFiles/
+CMakeCache.txt
+cmake-install.cmake
+install_manifest.txt
+Testing/
+*.cmake
+
+# VS/VSCode
+/.vs/
+/.vscode/
+*.opendb
+*.VC.db
+
+# Binaries
+*.exe
+*.pdb
+*.dll
+*.lib
+*.obj
+*.ilk
+*.log
+
+# CUDA
+*.cubin
+*.ptx
