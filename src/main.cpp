@@ -1,6 +1,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include "renderer/shader.h"
 
 int main()
 {
@@ -39,9 +40,10 @@ int main()
     }
 
     // 5. Print driver info
-    std::cout << "OpenGL vendor:   " << glGetString(GL_VENDOR) << "\n";
+    std::cout << "OpenGL vendor testset:   " << glGetString(GL_VENDOR) << "\n";
     std::cout << "OpenGL renderer: " << glGetString(GL_RENDERER) << "\n";
     std::cout << "OpenGL version:  " << glGetString(GL_VERSION) << "\n";
+    std::cout << message();
 
     // 6. Simple loop: clear the screen and poll events
     while (!glfwWindowShouldClose(window))

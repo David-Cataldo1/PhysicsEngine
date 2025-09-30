@@ -38,7 +38,7 @@ find_package(glm CONFIG REQUIRED)
 
 set(SRC
 	src/main.cpp
-)
+ "src/renderer/shader.cpp" "src/renderer/shader.h")
 
 # Create executable
 
