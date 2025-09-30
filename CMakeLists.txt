@@ -44,6 +44,9 @@ set(SRC
 
 add_executable(${PROJECT_NAME} ${SRC})
 
+# Sets the correct project as default
+
+set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
 
 # Cuda linking
 
