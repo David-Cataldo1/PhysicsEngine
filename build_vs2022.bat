@@ -15,6 +15,7 @@ set "GENERATOR=Visual Studio 17 2022"
 set "ARCH=x64"
 set "BUILD_DIR=build-msvc"
 set "DEFAULT_CONFIG=Release"
+set "TRIPLET=x64-windows"
 
 set "ROOT=%~dp0"
 if "%ROOT:~-1%"=="\" set "ROOT=%ROOT:~0,-1%"
@@ -35,6 +36,14 @@ if not exist "%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake" (
   exit /b 1
 )
 
+echo.
+echo [vcpkg] Ensuring dependencies are installed (triplet: %TRIPLET%)...
+"%VCPKG_ROOT%\vcpkg.exe" install glfw3 glad glm entt spdlog --triplet=%TRIPLET%
+if errorlevel 1 (
+  echo [ERROR] vcpkg install failed.
+  exit /b 1
+)
+
 if not exist "%ROOT%\%BUILD_DIR%" (
   mkdir "%ROOT%\%BUILD_DIR%" || ( echo [ERROR] Failed to create build dir & exit /b 1 )
 )
@@ -43,7 +52,8 @@ echo.
 echo [CMake] Configuring...
 cmake -S "%ROOT%" -B "%ROOT%\%BUILD_DIR%" ^
   -G "%GENERATOR%" -A %ARCH% ^
-  -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake"
+  -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
+  -DVCPKG_TARGET_TRIPLET=%TRIPLET%
 if errorlevel 1 ( echo [ERROR] CMake configuration failed. & exit /b 1 )
 
 echo.

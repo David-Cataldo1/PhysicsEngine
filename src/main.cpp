@@ -5,6 +5,7 @@
 
 int main()
 {
+
     // 1. Initialize GLFW
     if (!glfwInit())
     {

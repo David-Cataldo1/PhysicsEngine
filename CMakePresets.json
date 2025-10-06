@@ -1,6 +1,10 @@
 {
   "version": 6,
-  "cmakeMinimumRequired": { "major": 3, "minor": 22, "patch": 0 },
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 22,
+    "patch": 0
+  },
   "configurePresets": [
     {
       "name": "vs2022",
@@ -8,12 +12,23 @@
       "generator": "Visual Studio 17 2022",
       "binaryDir": "${sourceDir}/build-msvc",
       "cacheVariables": {
+        "CMAKE_CXX_STANDARD": "23",
+        "CMAKE_CUDA_STANDARD": "17",
+        "CMAKE_CUDA_ARCHITECTURES": "86",
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
       }
     }
   ],
   "buildPresets": [
-    { "name": "vs2022-Debug", "configurePreset": "vs2022", "configuration": "Debug" },
-    { "name": "vs2022-Release", "configurePreset": "vs2022", "configuration": "Release" }
+    {
+      "name": "vs2022-Debug",
+      "configurePreset": "vs2022",
+      "configuration": "Debug"
+    },
+    {
+      "name": "vs2022-Release",
+      "configurePreset": "vs2022",
+      "configuration": "Release"
+    }
   ]
 }
