@@ -31,21 +31,20 @@ if not defined VCPKG_ROOT (
   echo         Install vcpkg and set:  setx VCPKG_ROOT C:\dev\vcpkg
   exit /b 1
 )
+
 if not exist "%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake" (
   echo [ERROR] Toolchain not found: "%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake"
   exit /b 1
 )
 
-rem --- Install dependencies via vcpkg (handles both manifest and classic modes) ---
-set "MANIFEST_FILE=%ROOT%\vcpkg.json"
 echo.
+set "MANIFEST_FILE=%ROOT%\vcpkg.json"
 if exist "%MANIFEST_FILE%" (
   echo [vcpkg] Manifest detected: "%MANIFEST_FILE%"
   echo [vcpkg] Installing manifest dependencies (triplet: %TRIPLET%)...
   "%VCPKG_ROOT%\vcpkg.exe" install --triplet=%TRIPLET%
 ) else (
   echo [vcpkg] No manifest found. Using classic mode install (triplet: %TRIPLET%)...
-  rem Include all deps explicitly, including spdlog and entt
   "%VCPKG_ROOT%\vcpkg.exe" install glfw3 glad glm spdlog entt --triplet=%TRIPLET%
 )
 if errorlevel 1 (
@@ -59,23 +58,29 @@ if not exist "%ROOT%\%BUILD_DIR%" (
 
 echo.
 echo [CMake] Configuring...
-cmake -S "%ROOT%" -B "%ROOT%\%BUILD_DIR%" ^
-  -G "%GENERATOR%" -A %ARCH% ^
-  -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
-  -DVCPKG_TARGET_TRIPLET=%TRIPLET%
-if errorlevel 1 ( echo [ERROR] CMake configuration failed. & exit /b 1 )
+cmake -S "%ROOT%" -B "%ROOT%\%BUILD_DIR%" -G "%GENERATOR%" -A %ARCH% -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=%TRIPLET%
+if errorlevel 1 (
+  echo [ERROR] CMake configuration failed.
+  exit /b 1
+)
 
 echo.
 echo [CMake] Building (%CONFIG%)...
 cmake --build "%ROOT%\%BUILD_DIR%" --config %CONFIG%
-if errorlevel 1 ( echo [ERROR] Build failed. & exit /b 1 )
+if errorlevel 1 (
+  echo [ERROR] Build failed.
+  exit /b 1
+)
 
 echo.
 set "SLN_PATH="
 if exist "%ROOT%\%BUILD_DIR%\PhysicsEngine.sln" (
   set "SLN_PATH=%ROOT%\%BUILD_DIR%\PhysicsEngine.sln"
 ) else (
-  for %%F in ("%ROOT%\%BUILD_DIR%\*.sln") do ( set "SLN_PATH=%%~fF" & goto :found )
+  for %%F in ("%ROOT%\%BUILD_DIR%\*.sln") do (
+    set "SLN_PATH=%%~fF"
+    goto found
+  )
 )
 :found
 
