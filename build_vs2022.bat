@@ -1,14 +1,8 @@
 @echo off
-setlocal EnableExtensions EnableDelayedExpansion
+setlocal EnableExtensions
 
 rem ============================================
-rem build_vs2022.bat
-rem - Generates VS2022 solution with vcpkg toolchain
-rem - Builds (Debug/Release) and opens the solution
-rem Usage:
-rem   build_vs2022.bat            (defaults to Release)
-rem   build_vs2022.bat Debug
-rem   build_vs2022.bat Release
+rem build_vs2022.bat (no block parentheses version)
 rem ============================================
 
 set "GENERATOR=Visual Studio 17 2022"
@@ -24,73 +18,77 @@ set "CONFIG=%~1"
 if "%CONFIG%"=="" set "CONFIG=%DEFAULT_CONFIG%"
 
 echo.
-echo === PhysicsEngine: Configure for %GENERATOR% (%ARCH%), %CONFIG% ===
+echo === PhysicsEngine: Configure for %GENERATOR% %ARCH%, %CONFIG% ===
 
-if not defined VCPKG_ROOT (
-  echo [ERROR] VCPKG_ROOT is not set.
-  echo         Install vcpkg and set:  setx VCPKG_ROOT C:\dev\vcpkg
-  exit /b 1
-)
-
-if not exist "%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake" (
-  echo [ERROR] Toolchain not found: "%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake"
-  exit /b 1
-)
+if "%VCPKG_ROOT%"=="" goto ERR_NOVCPKG
+if not exist "%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake" goto ERR_TOOLCHAIN
 
 echo.
 set "MANIFEST_FILE=%ROOT%\vcpkg.json"
-if exist "%MANIFEST_FILE%" (
-  echo [vcpkg] Manifest detected: "%MANIFEST_FILE%"
-  echo [vcpkg] Installing manifest dependencies (triplet: %TRIPLET%)...
-  "%VCPKG_ROOT%\vcpkg.exe" install --triplet=%TRIPLET%
-) else (
-  echo [vcpkg] No manifest found. Using classic mode install (triplet: %TRIPLET%)...
-  "%VCPKG_ROOT%\vcpkg.exe" install glfw3 glad glm spdlog entt --triplet=%TRIPLET%
-)
-if errorlevel 1 (
-  echo [ERROR] vcpkg install failed.
-  exit /b 1
-)
+if exist "%MANIFEST_FILE%" goto MANIFEST
+goto CLASSIC
 
-if not exist "%ROOT%\%BUILD_DIR%" (
-  mkdir "%ROOT%\%BUILD_DIR%" || ( echo [ERROR] Failed to create build dir & exit /b 1 )
-)
+:MANIFEST
+echo [vcpkg] Manifest detected: "%MANIFEST_FILE%"
+echo [vcpkg] Installing manifest dependencies (triplet: %TRIPLET%)...
+"%VCPKG_ROOT%\vcpkg.exe" install --triplet=%TRIPLET%
+if errorlevel 1 goto ERR_VCPKG
+goto MKDIR
+
+:CLASSIC
+echo [vcpkg] No manifest found. Installing explicit deps (triplet: %TRIPLET%)...
+"%VCPKG_ROOT%\vcpkg.exe" install glfw3 glad glm spdlog entt --triplet=%TRIPLET%
+if errorlevel 1 goto ERR_VCPKG
+goto MKDIR
+
+:MKDIR
+if not exist "%ROOT%\%BUILD_DIR%" mkdir "%ROOT%\%BUILD_DIR%" || goto ERR_MKDIR
 
 echo.
 echo [CMake] Configuring...
 cmake -S "%ROOT%" -B "%ROOT%\%BUILD_DIR%" -G "%GENERATOR%" -A %ARCH% -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=%TRIPLET%
-if errorlevel 1 (
-  echo [ERROR] CMake configuration failed.
-  exit /b 1
-)
+if errorlevel 1 goto ERR_CONFIG
 
 echo.
 echo [CMake] Building (%CONFIG%)...
 cmake --build "%ROOT%\%BUILD_DIR%" --config %CONFIG%
-if errorlevel 1 (
-  echo [ERROR] Build failed.
-  exit /b 1
-)
+if errorlevel 1 goto ERR_BUILD
 
 echo.
-set "SLN_PATH="
-if exist "%ROOT%\%BUILD_DIR%\PhysicsEngine.sln" (
-  set "SLN_PATH=%ROOT%\%BUILD_DIR%\PhysicsEngine.sln"
-) else (
-  for %%F in ("%ROOT%\%BUILD_DIR%\*.sln") do (
-    set "SLN_PATH=%%~fF"
-    goto found
-  )
-)
-:found
-
-if defined SLN_PATH (
-  echo [OK] Solution: "%SLN_PATH%"
-  echo Opening in Visual Studio...
-  start "" "%SLN_PATH%"
-) else (
-  echo [WARN] No .sln found in "%ROOT%\%BUILD_DIR%".
-)
-
+set "SLN_PATH=%ROOT%\%BUILD_DIR%\PhysicsEngine.sln"
+if exist "%SLN_PATH%" goto OPEN
+for %%F in ("%ROOT%\%BUILD_DIR%\*.sln") do set "SLN_PATH=%%~fF" & goto OPEN
+echo [WARN] No .sln found in "%ROOT%\%BUILD_DIR%".
 echo Done.
 exit /b 0
+
+:OPEN
+echo [OK] Solution: "%SLN_PATH%"
+echo Opening in Visual Studio...
+start "" "%SLN_PATH%"
+echo Done.
+exit /b 0
+
+:ERR_NOVCPKG
+echo [ERROR] VCPKG_ROOT is not set. Example:  setx VCPKG_ROOT C:\dev\vcpkg
+exit /b 1
+
+:ERR_TOOLCHAIN
+echo [ERROR] Toolchain not found: "%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake"
+exit /b 1
+
+:ERR_VCPKG
+echo [ERROR] vcpkg install failed.
+exit /b 1
+
+:ERR_MKDIR
+echo [ERROR] Failed to create build dir "%ROOT%\%BUILD_DIR%".
+exit /b 1
+
+:ERR_CONFIG
+echo [ERROR] CMake configuration failed.
+exit /b 1
+
+:ERR_BUILD
+echo [ERROR] Build failed.
+exit /b 1
