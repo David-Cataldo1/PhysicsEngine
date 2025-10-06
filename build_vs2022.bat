@@ -36,9 +36,18 @@ if not exist "%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake" (
   exit /b 1
 )
 
+rem --- Install dependencies via vcpkg (handles both manifest and classic modes) ---
+set "MANIFEST_FILE=%ROOT%\vcpkg.json"
 echo.
-echo [vcpkg] Ensuring dependencies are installed (triplet: %TRIPLET%)...
-"%VCPKG_ROOT%\vcpkg.exe" install glfw3 glad glm entt spdlog --triplet=%TRIPLET%
+if exist "%MANIFEST_FILE%" (
+  echo [vcpkg] Manifest detected: "%MANIFEST_FILE%"
+  echo [vcpkg] Installing manifest dependencies (triplet: %TRIPLET%)...
+  "%VCPKG_ROOT%\vcpkg.exe" install --triplet=%TRIPLET%
+) else (
+  echo [vcpkg] No manifest found. Using classic mode install (triplet: %TRIPLET%)...
+  rem Include all deps explicitly, including spdlog and entt
+  "%VCPKG_ROOT%\vcpkg.exe" install glfw3 glad glm spdlog entt --triplet=%TRIPLET%
+)
 if errorlevel 1 (
   echo [ERROR] vcpkg install failed.
   exit /b 1
