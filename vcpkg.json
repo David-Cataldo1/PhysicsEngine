@@ -4,6 +4,8 @@
   "dependencies": [
     "glfw3",
     "glad",
-    "glm"
+    "glm",
+    "entt",
+    "spdlog"
   ]
 }
